@@ -5,13 +5,15 @@
   <groupId>com.intellectualcrafters</groupId>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>1.7</maven.compiler.source>
+    <maven.compiler.target>1.7</maven.compiler.target>
   </properties>
   <artifactId>PlotSquared</artifactId>
   <version>3.4.6-SNAPSHOT</version>
   <name>PlotSquared</name>
   <packaging>jar</packaging>
   <build>
-    <finalName>PlotSquared-Bukkit-${project.version}</finalName>
+    <finalName>PlotSquared</finalName>
     <sourceDirectory>Bukkit/src/main/java</sourceDirectory>
     <resources>
       <resource>
@@ -29,73 +31,28 @@
         <directory>Core/src/main/resources/</directory>
       </resource>
     </resources>
-    <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.3.2</version>
-        <configuration>
-          <excludes>
-            <exclude>**/Sponge/src/main/**/*.*</exclude>
-          </excludes>
-          <source>1.7</source>
-          <target>1.7</target>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>add-source</goal>
-            </goals>
-            <configuration>
-              <sources>
-                <source>Core/src/main/java</source>
-              </sources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
   </build>
-  <repositories>
-    <repository>
-      <id>spigot-repo</id>
-      <url>http://hub.spigotmc.org/nexus/content/groups/public/</url>
-    </repository>
-    <repository>
-      <id>sk80q</id>
-      <url>http://maven.sk89q.com/artifactory/repo/</url>
-    </repository>
-    <repository>
-      <id>vault</id>
-      <url>http://nexus.hc.to/content/repositories/pub_releases/</url>
-    </repository>
-    <repository>
-      <id>empcraft-repo</id>
-      <url>http://empcraft.com/maven2</url>
-    </repository>
-  </repositories>
   <dependencies>
     <dependency>
       <groupId>org.spigotmc</groupId>
-      <artifactId>spigot</artifactId>
-      <version>1.10.2-R0.1-SNAPSHOT</version>
+      <artifactId>spigot-api</artifactId>
+      <version>1.9-SNAPSHOT</version>
+      <scope>system</scope>
+      <systemPath>${basedir}/../spigot/spigot.jar</systemPath>
     </dependency>
     <dependency>
-      <groupId>com.sk89q</groupId>
-      <artifactId>worldedit</artifactId>
-      <version>6.0.0-SNAPSHOT</version>
-      <type>jar</type>
-      <scope>compile</scope>
+      <groupId>com.sk89q.worldedit</groupId>
+      <artifactId>worldedit-bukkit</artifactId>
+      <version>14.6</version>
+      <scope>system</scope>
+      <systemPath>${basedir}/../../plugins/worldedit-bukkit/worldedit-bukkit.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>net.milkbowl.vault</groupId>
-      <artifactId>VaultAPI</artifactId>
-      <version>1.5</version>
-      <scope>provided</scope>
+      <artifactId>Vault</artifactId>
+      <version>1.2.32</version>
+      <scope>system</scope>
+      <systemPath>${basedir}/../../plugins/Vault/Vault.jar</systemPath>
     </dependency>
   </dependencies>
 </project>
