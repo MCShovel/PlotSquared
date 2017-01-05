@@ -80,7 +80,7 @@ public class ForceFieldListener {
             if (plot.isAdded(uuid)) {
                 Set<PlotPlayer> players = getNearbyPlayers(player, plot);
                 for (PlotPlayer oPlayer : players) {
-                    if (!Permissions.hasPermission(oPlayer, C.PERMISSION_ADMIN_ENTRY_FORCEFIELD)) {
+                    if (!Permissions.hasPermission(oPlayer, C.PERMISSION_ADMIN_ENTRY_DENIED)) {
                         ((BukkitPlayer) oPlayer).player.setVelocity(calculateVelocity(plotPlayer, oPlayer));
                     }
                 }
@@ -89,7 +89,7 @@ public class ForceFieldListener {
                 if (oPlayer == null) {
                     return;
                 }
-                if (!Permissions.hasPermission(plotPlayer, C.PERMISSION_ADMIN_ENTRY_FORCEFIELD)) {
+                if (!Permissions.hasPermission(plotPlayer, C.PERMISSION_ADMIN_ENTRY_DENIED)) {
                     player.setVelocity(calculateVelocity(oPlayer, plotPlayer));
                 }
             }

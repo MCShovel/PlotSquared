@@ -378,7 +378,7 @@ public class PlayerEvents extends PlotListener implements Listener {
                 case "/up":
                 case "worldedit:up":
                 case "worldedit:/up":
-                    if (plot == null || (!plot.isAdded(pp.getUUID()) && !Permissions.hasPermission(pp, C.PERMISSION_ADMIN_BUILD_OTHER, true))) {
+                    if (plot == null || (!plot.isAdded(pp.getUUID()) && !Permissions.hasPermission(pp, C.PERMISSION_ADMIN_BUILD_OTHER.s(), true))) {
                         event.setCancelled(true);
                         return;
                     }
@@ -662,7 +662,7 @@ public class PlayerEvents extends PlotListener implements Listener {
             receiver.sendMessage(full);
         }
         if (!spies.isEmpty()) {
-            String spyMessage = C.PLOT_CHAT_SPY_FORMAT.s().replace("%plot_id%", id.x + ";" + id.y).replace("%sender%", sender).replace("%msg%", message);
+            String spyMessage = C.PLOT_CHAT_FORMAT.s().replace("%plot_id%", id.x + ";" + id.y).replace("%sender%", sender).replace("%msg%", message);
             for (Player player : spies) {
                 player.sendMessage(spyMessage);
             }
@@ -840,7 +840,7 @@ public class PlayerEvents extends PlotListener implements Listener {
             Player player = (Player) entity;
             if (!plot.hasOwner()) {
                 PlotPlayer plotPlayer = BukkitUtil.getPlayer(player);
-                if (Flags.ICE_FORM.isTrue(plot)) {
+                if (Flags.ICE_MELT.isTrue(plot)) {
                     return;
                 }
                 event.setCancelled(true);
@@ -848,7 +848,7 @@ public class PlayerEvents extends PlotListener implements Listener {
             }
             PlotPlayer plotPlayer = BukkitUtil.getPlayer(player);
             if (!plot.isAdded(plotPlayer.getUUID())) {
-                if (Flags.ICE_FORM.isTrue(plot)) {
+                if (Flags.ICE_MELT.isTrue(plot)) {
                     return;
                 }
                 event.setCancelled(true);
@@ -856,7 +856,7 @@ public class PlayerEvents extends PlotListener implements Listener {
             }
             return;
         }
-        if (!Flags.ICE_FORM.isTrue(plot)) {
+        if (!Flags.ICE_MELT.isTrue(plot)) {
             event.setCancelled(true);
         }
     }
