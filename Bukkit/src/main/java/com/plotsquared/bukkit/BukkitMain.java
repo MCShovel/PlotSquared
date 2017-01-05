@@ -16,21 +16,7 @@ import com.intellectualcrafters.plot.object.PlotPlayer;
 import com.intellectualcrafters.plot.object.RunnableVal;
 import com.intellectualcrafters.plot.object.SetupObject;
 import com.intellectualcrafters.plot.object.chat.PlainChatManager;
-import com.intellectualcrafters.plot.util.AbstractTitle;
-import com.intellectualcrafters.plot.util.ChatManager;
-import com.intellectualcrafters.plot.util.ChunkManager;
-import com.intellectualcrafters.plot.util.ConsoleColors;
-import com.intellectualcrafters.plot.util.EconHandler;
-import com.intellectualcrafters.plot.util.EventUtil;
-import com.intellectualcrafters.plot.util.InventoryUtil;
-import com.intellectualcrafters.plot.util.MainUtil;
-import com.intellectualcrafters.plot.util.SchematicHandler;
-import com.intellectualcrafters.plot.util.SetupUtils;
-import com.intellectualcrafters.plot.util.StringMan;
-import com.intellectualcrafters.plot.util.TaskManager;
-import com.intellectualcrafters.plot.util.UUIDHandler;
-import com.intellectualcrafters.plot.util.UUIDHandlerImplementation;
-import com.intellectualcrafters.plot.util.WorldUtil;
+import com.intellectualcrafters.plot.util.*;
 import com.intellectualcrafters.plot.util.block.QueueProvider;
 import com.intellectualcrafters.plot.uuid.UUIDWrapper;
 import com.plotsquared.bukkit.database.plotme.ClassicPlotMeConnector;
@@ -45,22 +31,8 @@ import com.plotsquared.bukkit.listeners.PlayerEvents_1_8;
 import com.plotsquared.bukkit.listeners.PlayerEvents_1_9;
 import com.plotsquared.bukkit.listeners.PlotPlusListener;
 import com.plotsquared.bukkit.listeners.WorldEvents;
-import com.plotsquared.bukkit.titles.DefaultTitle_19;
-import com.plotsquared.bukkit.util.BukkitChatManager;
-import com.plotsquared.bukkit.util.BukkitChunkManager;
-import com.plotsquared.bukkit.util.BukkitCommand;
-import com.plotsquared.bukkit.util.BukkitEconHandler;
-import com.plotsquared.bukkit.util.BukkitEventUtil;
-import com.plotsquared.bukkit.util.BukkitHybridUtils;
-import com.plotsquared.bukkit.util.BukkitInventoryUtil;
-import com.plotsquared.bukkit.util.BukkitSchematicHandler;
-import com.plotsquared.bukkit.util.BukkitSetupUtils;
-import com.plotsquared.bukkit.util.BukkitTaskManager;
-import com.plotsquared.bukkit.util.BukkitUtil;
-import com.plotsquared.bukkit.util.BukkitVersion;
-import com.plotsquared.bukkit.util.Metrics;
-import com.plotsquared.bukkit.util.SendChunk;
-import com.plotsquared.bukkit.util.SetGenCB;
+import com.plotsquared.bukkit.titles.DefaultTitle_111;
+import com.plotsquared.bukkit.util.*;
 import com.plotsquared.bukkit.util.block.BukkitLocalQueue;
 import com.plotsquared.bukkit.util.block.BukkitLocalQueue_1_7;
 import com.plotsquared.bukkit.util.block.BukkitLocalQueue_1_8;
@@ -102,49 +74,48 @@ public final class BukkitMain extends JavaPlugin implements Listener, IPlotMain 
     private static ConcurrentHashMap<String, Plugin> pluginMap;
 
     static {
-        {   // Disable AWE as otherwise both fail to load
-            PluginManager manager = Bukkit.getPluginManager();
-            try {
-                Settings.load(new File("plugins/PlotSquared/config/settings.yml"));
-                if (Settings.Enabled_Components.PLOTME_CONVERTER) { // Only disable PlotMe if conversion is enabled
-                    Field pluginsField = manager.getClass().getDeclaredField("plugins");
-                    Field lookupNamesField = manager.getClass().getDeclaredField("lookupNames");
-                    pluginsField.setAccessible(true);
-                    lookupNamesField.setAccessible(true);
-                    List<Plugin> plugins = (List<Plugin>) pluginsField.get(manager);
-                    Iterator<Plugin> iter = plugins.iterator();
-                    while (iter.hasNext()) {
-                        if (iter.next().getName().startsWith("PlotMe")) {
-                            iter.remove();
-                        }
+        // Disable AWE as otherwise both fail to load
+        PluginManager manager = Bukkit.getPluginManager();
+        try {
+            Settings.load(new File("plugins/PlotSquared/config/settings.yml"));
+            if (Settings.Enabled_Components.PLOTME_CONVERTER) { // Only disable PlotMe if conversion is enabled
+                Field pluginsField = manager.getClass().getDeclaredField("plugins");
+                Field lookupNamesField = manager.getClass().getDeclaredField("lookupNames");
+                pluginsField.setAccessible(true);
+                lookupNamesField.setAccessible(true);
+                List<Plugin> plugins = (List<Plugin>) pluginsField.get(manager);
+                Iterator<Plugin> iter = plugins.iterator();
+                while (iter.hasNext()) {
+                    if (iter.next().getName().startsWith("PlotMe")) {
+                        iter.remove();
                     }
-                    Map<String, Plugin> lookupNames = (Map<String, Plugin>) lookupNamesField.get(manager);
-                    lookupNames.remove("PlotMe");
-                    lookupNames.remove("PlotMe-DefaultGenerator");
-                    pluginsField.set(manager, new ArrayList<Plugin>(plugins) {
-                        @Override
-                        public boolean add(Plugin plugin) {
-                            if (plugin.getName().startsWith("PlotMe")) {
-                                System.out.print("Disabling `" + plugin.getName() + "` for PlotMe conversion (configure in PlotSquared settings.yml)");
-                            } else {
-                                return super.add(plugin);
-                            }
-                            return false;
-                        }
-                    });
-                    pluginMap = new ConcurrentHashMap<String, Plugin>(lookupNames) {
-                        @Override
-                        public Plugin put(String key, Plugin plugin) {
-                            if (!plugin.getName().startsWith("PlotMe")) {
-                                return super.put(key, plugin);
-                            }
-                            return null;
-                        }
-                    };
-                    lookupNamesField.set(manager, pluginMap);
                 }
-            } catch (Throwable ignore) {}
-        }
+                Map<String, Plugin> lookupNames = (Map<String, Plugin>) lookupNamesField.get(manager);
+                lookupNames.remove("PlotMe");
+                lookupNames.remove("PlotMe-DefaultGenerator");
+                pluginsField.set(manager, new ArrayList<Plugin>(plugins) {
+                    @Override
+                    public boolean add(Plugin plugin) {
+                        if (plugin.getName().startsWith("PlotMe")) {
+                            System.out.print("Disabling `" + plugin.getName() + "` for PlotMe conversion (configure in PlotSquared settings.yml)");
+                        } else {
+                            return super.add(plugin);
+                        }
+                        return false;
+                    }
+                });
+                pluginMap = new ConcurrentHashMap<String, Plugin>(lookupNames) {
+                    @Override
+                    public Plugin put(String key, Plugin plugin) {
+                        if (!plugin.getName().startsWith("PlotMe")) {
+                            return super.put(key, plugin);
+                        }
+                        return null;
+                    }
+                };
+                lookupNamesField.set(manager, pluginMap);
+            }
+        } catch (Throwable ignore) {}
     }
 
     public static WorldEdit worldEdit;
@@ -299,6 +270,7 @@ public final class BukkitMain extends JavaPlugin implements Listener, IPlotMain 
                                     case TIPPED_ARROW:
                                     case ENDER_PEARL:
                                     case ARROW:
+                                    case LLAMA_SPIT:
                                         // managed elsewhere | projectile
                                         continue;
                                     case ITEM_FRAME:
@@ -315,7 +287,7 @@ public final class BukkitMain extends JavaPlugin implements Listener, IPlotMain 
                                     case MINECART_MOB_SPAWNER:
                                     case ENDER_CRYSTAL:
                                     case MINECART_TNT:
-                                    case BOAT: {
+                                    case BOAT:
                                         if (Settings.Enabled_Components.KILL_ROAD_VEHICLES) {
                                             com.intellectualcrafters.plot.object.Location location = BukkitUtil.getLocation(entity.getLocation());
                                             Plot plot = location.getPlot();
@@ -339,7 +311,6 @@ public final class BukkitMain extends JavaPlugin implements Listener, IPlotMain 
                                         } else {
                                             continue;
                                         }
-                                    }
                                     case SMALL_FIREBALL:
                                     case FIREBALL:
                                     case DRAGON_FIREBALL:
@@ -350,6 +321,20 @@ public final class BukkitMain extends JavaPlugin implements Listener, IPlotMain 
                                     case FALLING_BLOCK:
                                         // managed elsewhere
                                         continue;
+                                    case LLAMA:
+                                    case DONKEY:
+                                    case MULE:
+                                    case ZOMBIE_HORSE:
+                                    case SKELETON_HORSE:
+                                    case HUSK:
+                                    case ELDER_GUARDIAN:
+                                    case WITHER_SKELETON:
+                                    case STRAY:
+                                    case ZOMBIE_VILLAGER:
+                                    case EVOKER:
+                                    case EVOKER_FANGS:
+                                    case VEX:
+                                    case VINDICATOR:
                                     case POLAR_BEAR:
                                     case BAT:
                                     case BLAZE:
@@ -436,8 +421,9 @@ public final class BukkitMain extends JavaPlugin implements Listener, IPlotMain 
         getServer().getPluginManager().registerEvents(main, this);
         try {
             getServer().getClass().getMethod("spigot");
+            Class.forName("org.bukkit.event.entity.EntitySpawnEvent");
             getServer().getPluginManager().registerEvents(new EntitySpawnListener(), this);
-        } catch (NoSuchMethodException ignored) {
+        } catch (NoSuchMethodException | ClassNotFoundException ignored) {
             PS.debug("Not running Spigot. Skipping EntitySpawnListener event.");
         }
         if (PS.get().checkVersion(getServerVersion(), BukkitVersion.v1_8_0)) {
@@ -530,8 +516,7 @@ public final class BukkitMain extends JavaPlugin implements Listener, IPlotMain 
     public boolean initPlotMeConverter() {
         if (new LikePlotMeConverter("PlotMe").run(new ClassicPlotMeConnector())) {
             return true;
-        }
-        else if (new LikePlotMeConverter("PlotMe").run(new PlotMeConnector_017())) {
+        } else if (new LikePlotMeConverter("PlotMe").run(new PlotMeConnector_017())) {
             return true;
         }
         return false;
@@ -590,7 +575,7 @@ public final class BukkitMain extends JavaPlugin implements Listener, IPlotMain 
             PS.log(C.PREFIX + " &c[WARN] Titles are disabled - please update your version of Bukkit to support this feature.");
             Settings.TITLES = false;
         } else {
-            AbstractTitle.TITLE_CLASS = new DefaultTitle_19();
+            AbstractTitle.TITLE_CLASS = new DefaultTitle_111();
             if (wrapper instanceof DefaultUUIDWrapper || wrapper.getClass() == OfflineUUIDWrapper.class && !Bukkit.getOnlineMode()) {
                 Settings.UUID.NATIVE_UUID_PROVIDER = true;
             }

@@ -12,6 +12,7 @@ import com.intellectualcrafters.plot.database.DBFunc;
 import com.intellectualcrafters.plot.flag.Flag;
 import com.intellectualcrafters.plot.flag.FlagManager;
 import com.intellectualcrafters.plot.flag.Flags;
+import com.intellectualcrafters.plot.generator.SquarePlotWorld;
 import com.intellectualcrafters.plot.util.BO3Handler;
 import com.intellectualcrafters.plot.util.ChunkManager;
 import com.intellectualcrafters.plot.util.EventUtil;
@@ -28,6 +29,7 @@ import com.intellectualcrafters.plot.util.block.LocalBlockQueue;
 import com.intellectualcrafters.plot.util.expiry.ExpireManager;
 import com.intellectualcrafters.plot.util.expiry.PlotAnalysis;
 import com.plotsquared.listener.PlotListener;
+
 import java.awt.geom.Area;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
@@ -45,7 +47,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The plot class<br>
@@ -766,7 +767,6 @@ public class Plot {
             @Override
             public void run() {
                 if (queue.isEmpty()) {
-                    AtomicInteger finished = new AtomicInteger(0);
                     Runnable run = new Runnable() {
                         @Override
                         public void run() {
@@ -816,6 +816,12 @@ public class Plot {
      */
     public void setBiome(final String biome, final Runnable whenDone) {
         final ArrayDeque<RegionWrapper> regions = new ArrayDeque<>(this.getRegions());
+        final int extendBiome;
+        if (area instanceof SquarePlotWorld) {
+            extendBiome = (((SquarePlotWorld) area).ROAD_WIDTH > 0) ? 1 : 0;
+        } else {
+            extendBiome = 0;
+        }
         Runnable run = new Runnable() {
             @Override
             public void run() {
@@ -825,8 +831,8 @@ public class Plot {
                     return;
                 }
                 RegionWrapper region = regions.poll();
-                Location pos1 = new Location(Plot.this.area.worldname, region.minX, region.minY, region.minZ);
-                Location pos2 = new Location(Plot.this.area.worldname, region.maxX, region.maxY, region.maxZ);
+                Location pos1 = new Location(Plot.this.area.worldname, region.minX - extendBiome, region.minY, region.minZ - extendBiome);
+                Location pos2 = new Location(Plot.this.area.worldname, region.maxX + extendBiome, region.maxY, region.maxZ + extendBiome);
                 ChunkManager.chunkTask(pos1, pos2, new RunnableVal<int[]>() {
                     @Override
                     public void run(int[] value) {
@@ -1084,11 +1090,15 @@ public class Plot {
             return false;
         }
         for (Plot current : getConnectedPlots()) {
+            List<PlotPlayer> players = current.getPlayersInPlot();
+            for (PlotPlayer pp : players) {
+                PlotListener.plotExit(pp, current);
+            }
             getArea().removePlot(getId());
             DBFunc.delete(current);
             current.owner = null;
             current.settings = null;
-            for (PlotPlayer pp : current.getPlayersInPlot()) {
+            for (PlotPlayer pp : players) {
                 PlotListener.plotEntry(pp, current);
             }
         }
@@ -2623,6 +2633,12 @@ public class Plot {
         return this.getManager().setComponent(this.area, this.getId(), component, blocks);
     }
 
+    public int getDistanceFromOrigin() {
+        Location bot = getManager().getPlotBottomLocAbs(this.area, id);
+        Location top = getManager().getPlotTopLocAbs(this.area, id);
+        return Math.max(Math.max(Math.abs(bot.getX()), Math.abs(bot.getZ())), Math.max(Math.abs(top.getX()), Math.abs(top.getZ())));
+    }
+
     /**
      * Expand the world border to include the provided plot (if applicable).
      */
@@ -2634,13 +2650,7 @@ public class Plot {
         if (border == Integer.MAX_VALUE) {
             return;
         }
-        PlotId id = new PlotId(Math.abs(this.getId().x) + 1, Math.abs(this.getId().x) + 1);
-        PlotManager manager = this.getManager();
-        Location bot = manager.getPlotBottomLocAbs(this.area, id);
-        Location top = manager.getPlotTopLocAbs(this.area, id);
-        int botmax = Math.max(Math.abs(bot.getX()), Math.abs(bot.getZ()));
-        int topmax = Math.max(Math.abs(top.getX()), Math.abs(top.getZ()));
-        int max = Math.max(botmax, topmax);
+        int max = getDistanceFromOrigin();
         if (max > border) {
             this.area.setMeta("worldBorder", max);
         }

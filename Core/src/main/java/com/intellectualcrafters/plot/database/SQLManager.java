@@ -18,7 +18,6 @@ import com.intellectualcrafters.plot.object.comment.PlotComment;
 import com.intellectualcrafters.plot.util.MainUtil;
 import com.intellectualcrafters.plot.util.StringMan;
 import com.intellectualcrafters.plot.util.TaskManager;
-
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -26,6 +25,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -108,45 +109,7 @@ public class SQLManager implements AbstractDB {
         this.plotTasks = new ConcurrentHashMap<>();
         this.playerTasks = new ConcurrentHashMap<>();
         this.clusterTasks = new ConcurrentHashMap<>();
-        TaskManager.runTaskAsync(new Runnable() {
-            @Override
-            public void run() {
-                long last = System.currentTimeMillis();
-                while (true) {
-                    if (SQLManager.this.closed) {
-                        break;
-                    }
-                    // schedule reconnect
-                    if (SQLManager.this.mySQL && System.currentTimeMillis() - last > 550000) {
-                        last = System.currentTimeMillis();
-                        try {
-                            close();
-                            SQLManager.this.closed = false;
-                            SQLManager.this.connection = database.forceConnection();
-                        } catch (SQLException | ClassNotFoundException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    if (!sendBatch()) {
-                        try {
-                            if (!getNotifyTasks().isEmpty()) {
-                                for (Runnable task : getNotifyTasks()) {
-                                    TaskManager.runTask(task);
-                                }
-                                getNotifyTasks().clear();
-                            }
-                            Thread.sleep(50);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
-        });
         this.prefix = p;
-        // Set timout
-        // setTimout();
-        // Public final
         this.SET_OWNER = "UPDATE `" + this.prefix + "plot` SET `owner` = ? WHERE `plot_id_x` = ? AND `plot_id_z` = ? AND `world` = ?";
         this.GET_ALL_PLOTS = "SELECT `id`, `plot_id_x`, `plot_id_z`, `world` FROM `" + this.prefix + "plot`";
         this.CREATE_PLOTS = "INSERT INTO `" + this.prefix + "plot`(`plot_id_x`, `plot_id_z`, `owner`, `world`, `timestamp`) values ";
@@ -155,7 +118,74 @@ public class SQLManager implements AbstractDB {
         this.CREATE_PLOT = "INSERT INTO `" + this.prefix + "plot`(`plot_id_x`, `plot_id_z`, `owner`, `world`, `timestamp`) VALUES(?, ?, ?, ?, ?)";
         this.CREATE_CLUSTER =
                 "INSERT INTO `" + this.prefix + "cluster`(`pos1_x`, `pos1_z`, `pos2_x`, `pos2_z`, `owner`, `world`) VALUES(?, ?, ?, ?, ?, ?)";
-        createTables();
+        try {
+            createTables();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        TaskManager.runTaskAsync(new Runnable() {
+            @Override
+            public void run() {
+                long last = System.currentTimeMillis();
+                while (true) {
+                    if (SQLManager.this.closed) {
+                        break;
+                    }
+                    boolean hasTask = !globalTasks.isEmpty() || !playerTasks.isEmpty() || !plotTasks.isEmpty() || !clusterTasks.isEmpty();
+                    if (hasTask) {
+                        if (SQLManager.this.mySQL && System.currentTimeMillis() - last > 550000 || !isValid()) {
+                            last = System.currentTimeMillis();
+                            reconnect();
+                        }
+                        if (!sendBatch()) {
+                            try {
+                                if (!getNotifyTasks().isEmpty()) {
+                                    for (Runnable task : getNotifyTasks()) {
+                                        TaskManager.runTask(task);
+                                    }
+                                    getNotifyTasks().clear();
+                                }
+                                Thread.sleep(50);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    } else {
+                        try {
+                            Thread.sleep(5000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    public boolean isValid() {
+        try {
+            if (connection.isClosed()) {
+                return false;
+            }
+        } catch (SQLException e) {
+            return false;
+        }
+        try (PreparedStatement stmt = this.connection.prepareStatement("SELECT 1")) {
+            stmt.executeQuery();
+            return true;
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
+    public void reconnect() {
+        try {
+            close();
+            SQLManager.this.closed = false;
+            SQLManager.this.connection = database.forceConnection();
+        } catch (SQLException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     public synchronized Queue<Runnable> getGlobalTasks() {
@@ -1644,8 +1674,19 @@ public class SQLManager implements AbstractDB {
                             user = UUID.fromString(o);
                             uuids.put(o, user);
                         }
-                        Timestamp timestamp = resultSet.getTimestamp("timestamp");
-                        long time = timestamp.getTime();
+                        long time;
+                        try {
+                            Timestamp timestamp = resultSet.getTimestamp("timestamp");
+                            time = timestamp.getTime();
+                        } catch (SQLException exception) {
+                            String parsable = resultSet.getString("timestamp");
+                            try {
+                                time = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(parsable).getTime();
+                            } catch (ParseException e) {
+                                PS.debug("Could not parse date for plot: " + id + " (" + parsable + ")");
+                                time = System.currentTimeMillis() + id;
+                            }
+                        }
                         Plot p = new Plot(plot_id, user, new HashSet<UUID>(), new HashSet<UUID>(), new HashSet<UUID>(), "", null, null, null,
                                 new boolean[]{false, false, false, false}, time, id);
                         HashMap<PlotId, Plot> map = newPlots.get(areaid);
@@ -2900,13 +2941,8 @@ public class SQLManager implements AbstractDB {
 
     @Override
     public void validateAllPlots(Set<Plot> toValidate) {
-        try {
-            if (this.connection.isClosed() || this.closed) {
-                this.closed = false;
-                this.connection = this.database.forceConnection();
-            }
-        } catch (ClassNotFoundException | SQLException e) {
-            e.printStackTrace();
+        if (!isValid()) {
+            reconnect();
         }
         PS.debug("$1All DB transactions during this session are being validated (This may take a while if corrections need to be made)");
         commit();

@@ -1,19 +1,16 @@
 package com.intellectualcrafters.plot.util;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class HastebinUtility {
     
-    public static final String BIN_URL = "http://hastebin.com/documents", USER_AGENT = "Mozilla/5.0";
+    public static final String BIN_URL = "https://hastebin.com/documents", USER_AGENT = "Mozilla/5.0";
     public static final Pattern PATTERN = Pattern.compile("\\{\"key\":\"([\\S\\s]*)\"\\}");
     
     public static String upload(final String string) throws IOException {
@@ -41,20 +38,24 @@ public class HastebinUtility {
 
         Matcher matcher = PATTERN.matcher(response.toString());
         if (matcher.matches()) {
-            return "http://hastebin.com/" + matcher.group(1);
+            return "https://hastebin.com/" + matcher.group(1);
         } else {
             throw new RuntimeException("Couldn't read response!");
         }
     }
-    
+
     public static String upload(final File file) throws IOException {
         final StringBuilder content = new StringBuilder();
+        List<String> lines = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             int i = 0;
-            while ((line = reader.readLine()) != null && i++ < 1000) {
-                content.append(line).append("\n");
+            while ((line = reader.readLine()) != null) {
+                lines.add(line);
             }
+        }
+        for (int i = Math.max(0, lines.size() - 1000); i < lines.size(); i++) {
+            content.append(lines.get(i)).append("\n");
         }
         return upload(content.toString());
     }

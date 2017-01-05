@@ -2,6 +2,7 @@ package com.plotsquared.bukkit.listeners;
 
 import com.intellectualcrafters.plot.PS;
 import com.intellectualcrafters.plot.config.C;
+import com.intellectualcrafters.plot.flag.Flags;
 import com.intellectualcrafters.plot.object.Location;
 import com.intellectualcrafters.plot.object.Plot;
 import com.intellectualcrafters.plot.object.PlotArea;
@@ -66,7 +67,7 @@ public class PlayerEvents_1_8 extends PlotListener implements Listener {
                 oldLore = lore.toString();
             }
         }
-        if (!newLore.equals("[(+NBT)]") || (current.equals(newItem) && newLore.equals(oldLore))) {
+        if (!"[(+NBT)]".equals(newLore) || (current.equals(newItem) && newLore.equals(oldLore))) {
             return;
         }
         HashSet<Byte> blocks = null;
@@ -141,6 +142,9 @@ public class PlayerEvents_1_8 extends PlotListener implements Listener {
         } else {
             UUID uuid = pp.getUUID();
             if (!plot.isAdded(uuid)) {
+                if (Flags.MISC_INTERACT.isTrue(plot)) {
+                    return;
+                }
                 if (!Permissions.hasPermission(pp, "plots.admin.interact.other")) {
                     MainUtil.sendMessage(pp, C.NO_PERMISSION_EVENT, "plots.admin.interact.other");
                     e.setCancelled(true);

@@ -6,6 +6,7 @@ import com.intellectualcrafters.plot.util.TaskManager;
 import com.plotsquared.bukkit.object.BukkitPlayer;
 import org.bukkit.entity.Player;
 
+@SuppressWarnings("deprecation")
 public class DefaultTitle_19 extends AbstractTitle {
 
     @Override
@@ -20,7 +21,7 @@ public class DefaultTitle_19 extends AbstractTitle {
                 }
             }, delay * 20);
         } catch (Throwable ignored) {
-            AbstractTitle.TITLE_CLASS = new DefaultTitle();
+            AbstractTitle.TITLE_CLASS = new DefaultTitle_183();
             AbstractTitle.TITLE_CLASS.sendTitle(player, head, sub, in, delay, out);
         }
     }

@@ -56,6 +56,7 @@ public enum C {
     PERMISSION_PLOT_TOGGLE_CHAT("plots.toggle.chat", "static.permissions"),
     PERMISSION_ADMIN_EXIT_DENIED("plots.admin.exit.denied", "static.permissions"),
     PERMISSION_ADMIN_ENTRY_DENIED("plots.admin.entry.denied", "static.permissions"),
+    PERMISSION_ADMIN_ENTRY_FORCEFIELD("plots.admin.entry.forcefield", "static.permissions"),
     PERMISSION_COMMANDS_CHAT("plots.admin.command.chat", "static.permissions"),
     PERMISSION_MERGE_OTHER("plots.merge.other", "static.permissions"),
     PERMISSION_ADMIN_DESTROY_UNOWNED("plots.admin.destroy.unowned", "static.permissions"),
@@ -70,6 +71,7 @@ public enum C {
     PERMISSION_ADMIN_INTERACT_OTHER("plots.admin.interact.other", "static.permissions"),
     PERMISSION_ADMIN_BUILD_HEIGHTLIMIT("plots.admin.build.heightlimit", "static.permissions"),
     PERMISSION_ADMIN_UPDATE("plots.admin.command.update", "static.permissions"),
+    PERMISSION_ADMIN_COMMAND_RATE("plots.admin.command.rate", "static.permissions"),
     PERMISSION_ADMIN_COMMAND_TRUST("plots.admin.command.trust", "static.permissions"),
     PERMISSION_TRUST_EVERYONE("plots.trust.everyone", "static.permissions"),
     PERMISSION_AREA_CREATE("plots.area.create", "static.permissions"),
@@ -158,8 +160,8 @@ public enum C {
     /*
      * Static console
      */
-    CONSOLE_JAVA_OUTDATED_1_8("&cYour version of java is outdated. It is highly recommended that you update to Java 8 as it increases performance "
-            + "and security. %s0 will require Java 9 in a future update.", "static.console"),
+    CONSOLE_JAVA_OUTDATED("&cYour version of java is outdated. It is highly recommended that you update to Java 8 as it increases performance "
+            + "and security. %s0 will require Java 8 in a future update.", "static.console"),
     CONSOLE_PLEASE_ENABLE_METRICS("&dPlease enable metrics for %s0. Using metrics improves plugin stability, performance, and features. "
             + "Bug fixes and new features are influenced on metrics.", "static.console"),
     /*
@@ -310,6 +312,7 @@ public enum C {
     /*
      * Ratings
      */
+    RATINGS_PURGED("$2Purged ratings for this plot", "Ratings"),
     RATING_NOT_VALID("$2You need to specify a number between 1 and 10", "Ratings"),
     RATING_ALREADY_EXISTS("$2You have already rated plot $2%s", "Ratings"),
     RATING_APPLIED("$4You successfully rated plot $2%s", "Ratings"),
@@ -595,6 +598,7 @@ public enum C {
      */
     CLEARING_PLOT("$2Clearing plot async.", "Working"),
     CLEARING_DONE("$4Clear completed! Took %sms.", "Working"),
+    DELETING_DONE("$4Delete completed! Took %sms.", "Working"),
     /*
      * Claiming
      */
@@ -623,6 +627,7 @@ public enum C {
     /*
      * Chat
      */
+    PLOT_CHAT_SPY_FORMAT("$2[$1Plot Spy$2][$1%plot_id%$2] $1%sender%$2: $1%msg%", "Chat"),
     PLOT_CHAT_FORMAT("$2[$1Plot Chat$2][$1%plot_id%$2] $1%sender%$2: $1%msg%", "Chat"),
     PLOT_CHAT_FORCED("$2This world forces everyone to use plot chat.", "Chat"),
     PLOT_CHAT_ON("$4Plot chat enabled.", "Chat"),
